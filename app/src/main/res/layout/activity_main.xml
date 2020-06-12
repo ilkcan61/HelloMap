@@ -1,0 +1,58 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <fragment
+            android:id="@+id/mapfragment"
+            class="com.here.android.mpa.mapping.AndroidXMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"></fragment>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="bottom"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_zoomPositive"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_above="@+id/btn_zoomNegative"
+                android:background="@mipmap/ic_zoompositive" />
+
+            <Button
+                android:id="@+id/btn_zoomNegative"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentBottom="true"
+                android:background="@mipmap/ic_zoomnegative" />
+
+            <Button
+                android:id="@+id/btn_mylocation"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_above="@+id/btn_zoomPositive"
+                android:layout_marginBottom="32dp"
+                android:background="@mipmap/ic_mylocation" />
+
+            <Button
+                android:id="@+id/btn_layer"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@mipmap/ic_layer" />
+
+        </RelativeLayout>
+
+
+    </FrameLayout>
+    <!-- Map Fragment embedded with the map object -->
+
+
+</LinearLayout>
