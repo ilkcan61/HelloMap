@@ -18,6 +18,8 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.location.LocationManager;
@@ -97,14 +99,15 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
                         // Set the map center to the Vancouver region (no animation)
                         map.setCenter(new GeoCoordinate(lct.getLatitude(), lct.getLongitude(), 0.0),
                                 Map.Animation.NONE);
-                        try {
-                            Image image = new Image();
-                            image.setImageResource(R.drawable.ic_location);
-                            MapMarker customMarker = new MapMarker(new GeoCoordinate(lct.getLatitude(), lct.getLongitude(), 0.0), image);
-                            map.addMapObject(customMarker);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                        int height = 100;
+                        int width = 100;
+                        BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.ic_location);
+                        Bitmap b = bitmapdraw.getBitmap();
+                        Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+                        Image image = new Image();
+                        image.setBitmap(smallMarker);
+                        MapMarker customMarker = new MapMarker(new GeoCoordinate(lct.getLatitude(), lct.getLongitude(), 0.0), image);
+                        map.addMapObject(customMarker);
 
                         // Set the zoom level to the average between min and max
                         map.setZoomLevel((map.getMaxZoomLevel() + map.getMinZoomLevel()) / 2);
