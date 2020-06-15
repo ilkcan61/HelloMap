@@ -65,6 +65,7 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
         checkPermissions();
 
         //Dağlar dağlar
+        //Hi Uğur naber
     }
 
     private AndroidXMapFragment getMapFragment() {
