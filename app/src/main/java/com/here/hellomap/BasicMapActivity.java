@@ -35,6 +35,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.here.android.mpa.common.CopyrightLogoPosition;
 import com.here.android.mpa.common.GeoCoordinate;
 import com.here.android.mpa.common.Image;
 import com.here.android.mpa.common.OnEngineInitListener;
@@ -105,6 +106,7 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
                         map.setZoomLevel((map.getMaxZoomLevel() + map.getMinZoomLevel()) / 2);
                         Button btnZoomPositive = findViewById(R.id.btn_zoomPositive);
                         Button btnZoomNegative = findViewById(R.id.btn_zoomNegative);
+                        mapFragment.setCopyrightLogoPosition(CopyrightLogoPosition.BOTTOM_LEFT);
                         btnZoomPositive.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
