@@ -99,7 +99,7 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
                                 Map.Animation.NONE);
                         try {
                             Image image = new Image();
-                            image.setImageResource(R.drawable.ic_car);
+                            image.setImageResource(R.drawable.ic_location);
                             MapMarker customMarker = new MapMarker(new GeoCoordinate(lct.getLatitude(), lct.getLongitude(), 0.0), image);
                             map.addMapObject(customMarker);
                         } catch (IOException e) {
