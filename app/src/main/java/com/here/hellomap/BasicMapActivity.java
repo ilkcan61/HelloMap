@@ -67,7 +67,7 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
         //Dağlar dağlar
         //Hi Uğur naber
         // Good
-        // good2
+        // good254
     }
 
     private AndroidXMapFragment getMapFragment() {
