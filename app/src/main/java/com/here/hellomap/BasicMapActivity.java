@@ -63,6 +63,7 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
         super.onCreate(savedInstanceState);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         checkPermissions();
+        //Dağlar dağlar
     }
 
     private AndroidXMapFragment getMapFragment() {
