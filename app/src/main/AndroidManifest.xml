@@ -26,7 +26,8 @@
             android:name="com.here.android.maps.license.key"
             android:value="GFF8xWKomINdBuswCa9rHX8qIqjSmQ6MYjU46H8VQnJ2QBKw+sEB78qyvzarJQ3PT4DvdHw4zlHuHxTwIiDVQ4UkWvge1qzB2pnkA/e12YI2aajW+ZawIFxyM6Z+mqg2MEKaUcYpeNd9rkFKSc+NAFqaXK60k0LRXzPZSzb06oMiURGAbZEdWspFbuu2dum7dk5O0OzrjN8RjW1rpds4SEAKZhWyri2u6JbG130ynvSjJKpIjXde7cqtti8r1Uvtp6nqAmJH2BGmS038R5mCU/Trwgr35Y3Y10vcFh6hmvThnXbIcXPaHZgpCQa3gt7tqOsVWexIP/Rrw4eTRVJU9I8nJKB7Z3K/YsUV82FNBq3JpeRssmZXejtYWd42pcZAabKJLymmjRzxLiMxgVz53IQ6EMSMsPQIeHfzvWMWMoJ32f6ybzBb8f4GAQuOaWK1oKZH1AIKjAgZQnBXtN5I5wThC0TPToLSSKbVyXilL8pNv/bFseobf/y0soX1Bn/KCJvYJOtftLjdee3eD1h9rRPbq1G99WB8wowBHmcqstfUc8wYP4UmvakTl7dfLrvW173h0YVPTYMFROlAYkOabYQU8uy1TQMjFIIfJ2HyOLT0WP7LWQvS417vbrckGNjDu5gdCjWP07eJmLW1VmfHevaoMmSkLW4ft4R4MvbnUjQ=" />
 
-        <activity android:name=".BasicMapActivity">
+        <activity android:name=".BasicMapActivity"
+            android:configChanges="orientation">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
