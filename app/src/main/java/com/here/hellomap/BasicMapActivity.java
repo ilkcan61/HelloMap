@@ -20,9 +20,9 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -30,11 +30,13 @@ import android.os.Handler;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,10 +47,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.here.android.mpa.common.CopyrightLogoPosition;
 import com.here.android.mpa.common.GeoBoundingBox;
 import com.here.android.mpa.common.GeoCoordinate;
@@ -76,7 +75,7 @@ import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class BasicMapActivity extends FragmentActivity implements LayersAdapter.ItemListener {
+public class BasicMapActivity extends FragmentActivity implements LayersAdapter.ItemListener, View.OnClickListener {
     private final static int REQUEST_CODE_ASK_PERMISSIONS = 1;
     private static final String[] REQUIRED_SDK_PERMISSIONS = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     private Map map = null;
@@ -86,14 +85,35 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
     MapRoute mapRoute;
     private Fragment fragment = null;
     private LinearLayout llInfo;
+    private TextView txtInfoId;
     private TextView txtInfoName;
+    private TextView txtInfoBloodGroup;
+    private TextView txtInfodateOfBirth;
+    private MapMarker customMarker1;
+    private MapMarker customMarker2;
+    private boolean oriantationVertical = true;
+    private Button btnZoomPositive;
+    private Button btnZoomNegative;
+    private Button btnMylocation;
+    private Button btnLayers;
+    private Button btnRoute;
+    private ScrollView llLayout;
+    private LinearLayout llMapNormal;
+    private LinearLayout llMapTerrain;
+    private LinearLayout llMapSatellite;
 
-    private boolean oriantationVertical=true;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        llInfo=findViewById(R.id.fragment_container);
+        llInfo = findViewById(R.id.fragment_container);
+        llLayout = findViewById(R.id.ll_layer);
+        llMapNormal = findViewById(R.id.ll_map_normal);
+        llMapTerrain = findViewById(R.id.ll_terrain);
+        llMapSatellite = findViewById(R.id.ll_map_satellite);
+        llMapNormal.setOnClickListener(this);
+        llMapTerrain.setOnClickListener(this);
+        llMapSatellite.setOnClickListener(this);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         checkPermissions();
         initCreateRouteButton();
@@ -101,6 +121,19 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
 
     private AndroidXMapFragment getMapFragment() {
         return (AndroidXMapFragment) getSupportFragmentManager().findFragmentById(R.id.mapfragment);
+    }
+
+    private void addMarkerMyLocation(Location lct) {
+        final BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_location);
+        Bitmap b = bitmapdraw.getBitmap();
+        int height = 140;
+        int width = 140;
+        Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+        final Image image = new Image();
+        image.setBitmap(smallMarker);
+        final MapMarker customMarker = new MapMarker(new GeoCoordinate(lct.getLatitude(), lct.getLongitude(), 0.0), image);
+        customMarker.setDescription("Şu an ki konumunuz");
+        map.addMapObject(customMarker);
     }
 
     @SuppressWarnings("deprecation")
@@ -118,20 +151,13 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
                     // Set the map center to the Vancouver region (no animation)
                     map.setCenter(new GeoCoordinate(lct.getLatitude(), lct.getLongitude(), 0.0),
                             Map.Animation.NONE);
-                    int height = 140;
-                    int width = 140;
-                    BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_location);
-                    Bitmap b = bitmapdraw.getBitmap();
-                    Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
-                    final Image image = new Image();
-                    image.setBitmap(smallMarker);
-                    MapMarker customMarker = new MapMarker(new GeoCoordinate(lct.getLatitude(), lct.getLongitude(), 0.0), image);
-                    map.addMapObject(customMarker);
 
+                    final BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_location);
+                    addMarkerMyLocation(lct);
                     // Set the zoom level to the average between min and max
                     map.setZoomLevel((map.getMaxZoomLevel() + map.getMinZoomLevel()) / 2);
-                    Button btnZoomPositive = findViewById(R.id.btn_zoomPositive);
-                    Button btnZoomNegative = findViewById(R.id.btn_zoomNegative);
+                    btnZoomPositive = findViewById(R.id.btn_zoomPositive);
+                    btnZoomNegative = findViewById(R.id.btn_zoomNegative);
                     mapFragment.setCopyrightLogoPosition(CopyrightLogoPosition.BOTTOM_LEFT);
 
                  /*   CoreRouter router = new CoreRouter();
@@ -168,15 +194,18 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
                             map.setZoomLevel(map.getZoomLevel() / 1.06);
                         }
                     });
-                    Button btnMylocation = findViewById(R.id.btn_mylocation);
+                    btnMylocation = findViewById(R.id.btn_mylocation);
                     btnMylocation.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
+                            map.removeAllMapObjects();
+                            addMarkerMyLocation(lct);
                             map.setZoomLevel((map.getMaxZoomLevel() + map.getMinZoomLevel()) / 1.7);
                             map.setCenter(new GeoCoordinate(lct.getLatitude(), lct.getLongitude(), 0.0), Map.Animation.NONE);
                         }
                     });
-                    Button btnLayers = findViewById(R.id.btn_layer);
+
+                    btnLayers = findViewById(R.id.btn_layer);
                     btnLayers.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
@@ -184,6 +213,156 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
                             showDialog(schemes);
                         }
                     });
+                    MapGesture.OnGestureListener onGestureListener = new MapGesture.OnGestureListener() {
+
+                        @Override
+                        public void onPanStart() {
+
+                        }
+
+                        @Override
+                        public void onPanEnd() {
+
+                        }
+
+                        @Override
+                        public void onMultiFingerManipulationStart() {
+
+                        }
+
+                        @Override
+                        public void onMultiFingerManipulationEnd() {
+
+                        }
+
+                        @Override
+                        public boolean onMapObjectsSelected(@NonNull List<ViewObject> list) {
+
+                            for (ViewObject viewObject : list) {
+                                if (viewObject.getBaseType() == ViewObject.Type.USER_OBJECT) {
+                                    final MapObject mapObject = (MapObject) viewObject;
+                                    if (mapObject.getType() == MapObject.Type.MARKER) {
+                                        runOnUiThread(new Runnable() {
+                                            public void run() {
+                                                MapMarker window_marker = ((MapMarker) mapObject);
+                                                final Bitmap b = bitmapdraw.getBitmap();
+                                                Bitmap smallMarker = Bitmap.createScaledBitmap(b, 160, 160, false);
+                                                final Image image = new Image();
+                                                image.setBitmap(smallMarker);
+                                                window_marker.setIcon(image);
+                                                Animation slideUp = AnimationUtils.loadAnimation(BasicMapActivity.this, R.anim.slide_up);
+
+
+                                                if (window_marker.getDescription().equals("Şu an ki konumunuz")) {
+                                                    Toast.makeText(getApplicationContext(), "Şu an ki konumunuz", Toast.LENGTH_SHORT).show();
+                                                } else {
+                                                    if (llInfo.getVisibility() == View.INVISIBLE) {
+                                                        ButtonVisibility(View.INVISIBLE);
+                                                        llInfo.setVisibility(View.VISIBLE);
+                                                        llInfo.startAnimation(slideUp);
+                                                    }
+                                                    txtInfoId = findViewById(R.id.txtId);
+                                                    txtInfoName = findViewById(R.id.txtName);
+                                                    txtInfoBloodGroup = findViewById(R.id.txt_bloodGroup);
+                                                    txtInfodateOfBirth = findViewById(R.id.txt_dateOfBirth);
+                                                    String[] markerDescriptions = window_marker.getDescription().split("%");
+                                                    String id = markerDescriptions[0];
+                                                    String name = markerDescriptions[1];
+                                                    String bloodGroup = markerDescriptions[2];
+                                                    String dateOfBirth = markerDescriptions[3];
+
+                                                    txtInfoId.setText(id);
+                                                    txtInfoName.setText(name);
+                                                    txtInfoBloodGroup.setText(bloodGroup);
+                                                    txtInfodateOfBirth.setText(dateOfBirth);
+                                                }
+
+                                            }
+                                        });
+                                        return true;
+                                    }
+                                }
+                            }
+                            return true;
+                        }
+
+                        @Override
+                        public boolean onTapEvent(@NonNull PointF pointF) {
+                            final Bitmap b = bitmapdraw.getBitmap();
+                            Bitmap smallMarker = Bitmap.createScaledBitmap(b, 100, 100, false);
+                            final Image image = new Image();
+                            image.setBitmap(smallMarker);
+                            final Animation slideDown = AnimationUtils.loadAnimation(BasicMapActivity.this, R.anim.slide_down);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (llInfo.getVisibility() == View.VISIBLE) {
+                                        ButtonVisibility(View.VISIBLE);
+                                        llInfo.setVisibility(View.INVISIBLE);
+                                        llInfo.startAnimation(slideDown);
+                                    }
+                                    if (llLayout.getVisibility() == View.VISIBLE) {
+                                        btnLayers.setVisibility(View.VISIBLE);
+                                        llLayout.setVisibility(View.INVISIBLE);
+                                        Animation slideRight = AnimationUtils.loadAnimation(BasicMapActivity.this, R.anim.slide_down);
+                                        llLayout.setAnimation(slideRight);
+                                    }
+
+                                }
+                            });
+                            if (customMarker1 != null) {
+                                customMarker1.setIcon(image);
+                                customMarker2.setIcon(image);
+                            }
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onDoubleTapEvent(@NonNull PointF pointF) {
+                            return false;
+                        }
+
+                        @Override
+                        public void onPinchLocked() {
+
+                        }
+
+                        @Override
+                        public boolean onPinchZoomEvent(float v, @NonNull PointF pointF) {
+                            return false;
+                        }
+
+                        @Override
+                        public void onRotateLocked() {
+
+                        }
+
+                        @Override
+                        public boolean onRotateEvent(float v) {
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onTiltEvent(float v) {
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onLongPressEvent(@NonNull PointF pointF) {
+                            return false;
+                        }
+
+                        @Override
+                        public void onLongPressRelease() {
+
+                        }
+
+                        @Override
+                        public boolean onTwoFingerTapEvent(@NonNull PointF pointF) {
+                            return false;
+                        }
+                    };
+                    Objects.requireNonNull(mapFragment.getMapGesture()).addOnGestureListener(onGestureListener, 0, true);
                 } else {
                     System.out.println("ERROR: Cannot initialize Map Fragment");
 
@@ -216,27 +395,31 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
     }
 
     public void showDialog(List<String> layerList) {
-        dialog = new Dialog(BasicMapActivity.this);
+        llLayout.setVisibility(View.VISIBLE);
+        btnLayers.setVisibility(View.INVISIBLE);
+        Animation slideRight = AnimationUtils.loadAnimation(BasicMapActivity.this, R.anim.slide_right);
+        llLayout.setAnimation(slideRight);
+       /* dialog = new Dialog(BasicMapActivity.this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setCancelable(false);
         dialog.setContentView(R.layout.custom_dialog_layers);
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        RecyclerView rvLayers = dialog.findViewById(R.id.rv_layers);
+        //RecyclerView rvLayers = dialog.findViewById(R.id.rv_layers);
         ArrayList<Layer> newData = new ArrayList<>();
         for (int i = 0; i < layerList.size(); i++) {
             newData.add(new Layer(i, layerList.get(i)));
-          /*  if(i==4){
+          *//*  if(i==4){
                 newData.add(new Layer(i, "Uydu Görüntüsü"));
-            }*/
+            }*//*
         }
-        LayersAdapter adapter = new LayersAdapter(newData, getApplicationContext());
+        *//*LayersAdapter adapter = new LayersAdapter(newData, getApplicationContext());
         rvLayers.setAdapter(adapter);
         adapter.setItemListener(this);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getApplicationContext());
         linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
-        rvLayers.setLayoutManager(linearLayoutManager);
+        rvLayers.setLayoutManager(linearLayoutManager);*//*
         dialog.setCanceledOnTouchOutside(true);
-        dialog.show();
+        dialog.show();*/
     }
 
     public void showInfoDialog(MapMarker marker) {
@@ -349,7 +532,7 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
 
 
     private void initCreateRouteButton() {
-        Button btnRoute = findViewById(R.id.btn_route);
+        btnRoute = findViewById(R.id.btn_route);
 
         btnRoute.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -380,13 +563,15 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
         });
 
     }
-    private void ShowInfo(){
+
+    private void ShowInfo() {
         fragment = new ContentFragment();
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction t = fm.beginTransaction();
         t.replace(R.id.fragment_container, fragment);
         t.commit();
     }
+
     private void LoadRoute() {
         final ArrayList<Coordinate> coordinates = new ArrayList<>();
         coordinates.add(new Coordinate(40.792921, 39.581863));
@@ -405,10 +590,10 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
         final Handler handler = new Handler();
         map.setCenter(new GeoCoordinate(coordinates.get(0).getLatitude(), coordinates.get(0).getLongitude(), 0.0),
                 Map.Animation.NONE);
-        final MapMarker customMarker = new MapMarker(new GeoCoordinate(coordinates.get(0).getLatitude(), coordinates.get(0).getLongitude(), 0.0), image);
-        customMarker.setDescription("İlkcan Yılmaz");
+        customMarker1 = new MapMarker(new GeoCoordinate(coordinates.get(0).getLatitude(), coordinates.get(0).getLongitude(), 0.0), image);
+        customMarker1.setDescription("345761%İlkcan Yılmaz%A Rh+%23/07/1996");
 
-        map.addMapObject(customMarker);
+        map.addMapObject(customMarker1);
         TimerTask doAsynchronousTask = new TimerTask() {
             int i = 0;
 
@@ -417,7 +602,7 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
                 handler.post(new Runnable() {
                     public void run() {
                         if (i < coordinates.size()) {
-                            customMarker.setCoordinate(new GeoCoordinate(coordinates.get(i).getLatitude(), coordinates.get(i).getLongitude(), 0.0));
+                            customMarker1.setCoordinate(new GeoCoordinate(coordinates.get(i).getLatitude(), coordinates.get(i).getLongitude(), 0.0));
                             i++;
                         }
                     }
@@ -426,105 +611,9 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
         };
         Timer timer = new Timer();
         timer.schedule(doAsynchronousTask, 10, 500);
-        MapGesture.OnGestureListener onGestureListener = new MapGesture.OnGestureListener() {
-
-            @Override
-            public void onPanStart() {
-
-            }
-
-            @Override
-            public void onPanEnd() {
-
-            }
-
-            @Override
-            public void onMultiFingerManipulationStart() {
-
-            }
-
-            @Override
-            public void onMultiFingerManipulationEnd() {
-
-            }
-
-            @Override
-            public boolean onMapObjectsSelected(@NonNull List<ViewObject> list) {
-
-                for (ViewObject viewObject : list) {
-                    if (viewObject.getBaseType() == ViewObject.Type.USER_OBJECT) {
-                        final MapObject mapObject = (MapObject) viewObject;
-                        if (mapObject.getType() == MapObject.Type.MARKER) {
-                            runOnUiThread(new Runnable() {
-                                public void run() {
-                                    MapMarker window_marker = ((MapMarker) mapObject);
-                                    llInfo.setVisibility(View.VISIBLE);
-                                    txtInfoName.setText(window_marker.getDescription());
-                                    //ShowInfo();
-                                    //showInfoDialog(window_marker);
-
-                                }
-                            });
-                            return true;
-                        }
-                    }
-                }
-                return true;
-            }
-
-            @Override
-            public boolean onTapEvent(@NonNull PointF pointF) {
-                return false;
-            }
-
-            @Override
-            public boolean onDoubleTapEvent(@NonNull PointF pointF) {
-                return false;
-            }
-
-            @Override
-            public void onPinchLocked() {
-
-            }
-
-            @Override
-            public boolean onPinchZoomEvent(float v, @NonNull PointF pointF) {
-                return false;
-            }
-
-            @Override
-            public void onRotateLocked() {
-
-            }
-
-            @Override
-            public boolean onRotateEvent(float v) {
-                return false;
-            }
-
-            @Override
-            public boolean onTiltEvent(float v) {
-                return false;
-            }
-
-            @Override
-            public boolean onLongPressEvent(@NonNull PointF pointF) {
-                return false;
-            }
-
-            @Override
-            public void onLongPressRelease() {
-
-            }
-
-            @Override
-            public boolean onTwoFingerTapEvent(@NonNull PointF pointF) {
-                return false;
-            }
-        };
-        Objects.requireNonNull(mapFragment.getMapGesture()).addOnGestureListener(onGestureListener, 0, true);
 
     }
+
     private void LoadRoute2() {
         final ArrayList<Coordinate> coordinates = new ArrayList<>();
         coordinates.add(new Coordinate(40.772921, 39.571863));
@@ -534,7 +623,7 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
         coordinates.add(new Coordinate(40.772174, 39.571476));
         coordinates.add(new Coordinate(40.771930, 39.571283));
 
-        BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_location);
+        final BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_location);
         final Bitmap b = bitmapdraw.getBitmap();
         Bitmap smallMarker = Bitmap.createScaledBitmap(b, 100, 100, false);
         final Image image = new Image();
@@ -543,10 +632,10 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
         final Handler handler = new Handler();
         map.setCenter(new GeoCoordinate(coordinates.get(0).getLatitude(), coordinates.get(0).getLongitude(), 0.0),
                 Map.Animation.NONE);
-        final MapMarker customMarker = new MapMarker(new GeoCoordinate(coordinates.get(0).getLatitude(), coordinates.get(0).getLongitude(), 0.0), image);
-        customMarker.setDescription("Uğur Byz");
+        customMarker2 = new MapMarker(new GeoCoordinate(coordinates.get(0).getLatitude(), coordinates.get(0).getLongitude(), 0.0), image);
+        customMarker2.setDescription("345761%Uğur Büyükyılmaz%AB Rh+%23/07/1996");
 
-        map.addMapObject(customMarker);
+        map.addMapObject(customMarker2);
         TimerTask doAsynchronousTask = new TimerTask() {
             int i = 0;
 
@@ -555,7 +644,7 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
                 handler.post(new Runnable() {
                     public void run() {
                         if (i < coordinates.size()) {
-                            customMarker.setCoordinate(new GeoCoordinate(coordinates.get(i).getLatitude(), coordinates.get(i).getLongitude(), 0.0));
+                            customMarker2.setCoordinate(new GeoCoordinate(coordinates.get(i).getLatitude(), coordinates.get(i).getLongitude(), 0.0));
                             i++;
                         }
                     }
@@ -564,103 +653,45 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
         };
         Timer timer = new Timer();
         timer.schedule(doAsynchronousTask, 10, 500);
-        MapGesture.OnGestureListener onGestureListener = new MapGesture.OnGestureListener() {
 
-            @Override
-            public void onPanStart() {
 
+    }
+
+    private void ButtonVisibility(int visibility) {
+        btnLayers.setVisibility(visibility);
+        btnMylocation.setVisibility(visibility);
+        btnRoute.setVisibility(visibility);
+        btnZoomPositive.setVisibility(visibility);
+        btnZoomNegative.setVisibility(visibility);
+    }
+
+    public Bitmap invert(Bitmap src) {
+        // image size
+        int width = src.getWidth();
+        int height = src.getHeight();
+        // create output bitmap
+        Bitmap bmOut = Bitmap.createBitmap(width, height, src.getConfig());
+        // color information
+        int A, R, G, B;
+        int pixel;
+
+        // scan through all pixels
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+                // get pixel color
+                pixel = src.getPixel(x, y);
+                // get color on each channel
+                A = Color.alpha(pixel);
+                R = Color.red(pixel);
+                G = Color.green(pixel);
+                B = Color.blue(pixel);
+                // set new pixel color to output image
+                bmOut.setPixel(x, y, Color.argb(A, 100, 100, 100));
             }
+        }
 
-            @Override
-            public void onPanEnd() {
-
-            }
-
-            @Override
-            public void onMultiFingerManipulationStart() {
-
-            }
-
-            @Override
-            public void onMultiFingerManipulationEnd() {
-
-            }
-
-            @Override
-            public boolean onMapObjectsSelected(@NonNull List<ViewObject> list) {
-
-                for (ViewObject viewObject : list) {
-                    if (viewObject.getBaseType() == ViewObject.Type.USER_OBJECT) {
-                        final MapObject mapObject = (MapObject) viewObject;
-                        if (mapObject.getType() == MapObject.Type.MARKER) {
-                            runOnUiThread(new Runnable() {
-                                public void run() {
-                                    MapMarker window_marker = ((MapMarker) mapObject);
-                                    llInfo.setVisibility(View.VISIBLE);
-                                    txtInfoName=findViewById(R.id.txtName);
-                                    txtInfoName.setText(window_marker.getDescription());
-                                }
-                            });
-                            return true;
-                        }
-                    }
-                }
-                return true;
-            }
-
-            @Override
-            public boolean onTapEvent(@NonNull PointF pointF) {
-                llInfo.setVisibility(View.INVISIBLE);
-                return false;
-            }
-
-            @Override
-            public boolean onDoubleTapEvent(@NonNull PointF pointF) {
-                return false;
-            }
-
-            @Override
-            public void onPinchLocked() {
-
-            }
-
-            @Override
-            public boolean onPinchZoomEvent(float v, @NonNull PointF pointF) {
-                return false;
-            }
-
-            @Override
-            public void onRotateLocked() {
-
-            }
-
-            @Override
-            public boolean onRotateEvent(float v) {
-                return false;
-            }
-
-            @Override
-            public boolean onTiltEvent(float v) {
-                return false;
-            }
-
-            @Override
-            public boolean onLongPressEvent(@NonNull PointF pointF) {
-                return false;
-            }
-
-            @Override
-            public void onLongPressRelease() {
-
-            }
-
-            @Override
-            public boolean onTwoFingerTapEvent(@NonNull PointF pointF) {
-                return false;
-            }
-        };
-        Objects.requireNonNull(mapFragment.getMapGesture()).addOnGestureListener(onGestureListener, 0, true);
-
+        // return final image
+        return bmOut;
     }
 
     @Override
@@ -669,14 +700,14 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
 
         int newOrientation = newConfig.orientation;
 
-        oriantationVertical= newOrientation != Configuration.ORIENTATION_LANDSCAPE;
-        if(oriantationVertical){
+        oriantationVertical = newOrientation != Configuration.ORIENTATION_LANDSCAPE;
+        if (oriantationVertical) {
             final float scale = getApplicationContext().getResources().getDisplayMetrics().density;
             int pixels = (int) (120 * scale + 0.5f);
             FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, pixels);
             layoutParams.gravity = Gravity.BOTTOM;
             llInfo.setLayoutParams(layoutParams);
-        }else{
+        } else {
             final float scale = getApplicationContext().getResources().getDisplayMetrics().density;
             int pixels = (int) (240 * scale + 0.5f);
             FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(pixels, FrameLayout.LayoutParams.MATCH_PARENT);
@@ -762,5 +793,26 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
                         }
                     }
                 });
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.ll_map_normal:
+                map.setMapScheme(Map.Scheme.NORMAL_DAY);
+                llLayout.setVisibility(View.INVISIBLE);
+                btnLayers.setVisibility(View.VISIBLE);
+                break;
+            case R.id.ll_terrain:
+                map.setMapScheme(Map.Scheme.TERRAIN_DAY);
+                llLayout.setVisibility(View.INVISIBLE);
+                btnLayers.setVisibility(View.VISIBLE);
+                break;
+            case R.id.ll_map_satellite:
+                map.setMapScheme(Map.Scheme.SATELLITE_DAY);
+                llLayout.setVisibility(View.INVISIBLE);
+                btnLayers.setVisibility(View.VISIBLE);
+                break;
+        }
     }
 }

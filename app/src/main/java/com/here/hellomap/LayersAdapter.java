@@ -53,7 +53,7 @@ public class LayersAdapter extends RecyclerView.Adapter<LayersAdapter.ViewHolder
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            txtLayerName = itemView.findViewById(R.id.txt_layerName);
+            txtLayerName = itemView.findViewById(R.id.txt_title);
             itemView.setOnClickListener(this);
         }
 
