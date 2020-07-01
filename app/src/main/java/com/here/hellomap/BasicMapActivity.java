@@ -30,7 +30,6 @@ import android.os.Handler;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -45,8 +44,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 
 import com.here.android.mpa.common.CopyrightLogoPosition;
 import com.here.android.mpa.common.GeoBoundingBox;
@@ -75,7 +72,7 @@ import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class BasicMapActivity extends FragmentActivity implements LayersAdapter.ItemListener, View.OnClickListener {
+public class BasicMapActivity extends FragmentActivity implements View.OnClickListener {
     private final static int REQUEST_CODE_ASK_PERMISSIONS = 1;
     private static final String[] REQUIRED_SDK_PERMISSIONS = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     private Map map = null;
@@ -117,6 +114,21 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         checkPermissions();
         initCreateRouteButton();
+        int orientation = getResources().getConfiguration().orientation;
+
+        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+            final float scale = getApplicationContext().getResources().getDisplayMetrics().density;
+            int pixels = (int) (120 * scale + 0.5f);
+            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, pixels);
+            layoutParams.gravity = Gravity.BOTTOM;
+            llInfo.setLayoutParams(layoutParams);
+        } else {
+            final float scale = getApplicationContext().getResources().getDisplayMetrics().density;
+            int pixels = (int) (240 * scale + 0.5f);
+            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(pixels, FrameLayout.LayoutParams.MATCH_PARENT);
+            layoutParams.gravity = Gravity.END;
+            llInfo.setLayoutParams(layoutParams);
+        }
     }
 
     private AndroidXMapFragment getMapFragment() {
@@ -422,17 +434,6 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
         dialog.show();*/
     }
 
-    public void showInfoDialog(MapMarker marker) {
-        dialog = new Dialog(BasicMapActivity.this);
-        View sheetView = getLayoutInflater().inflate(R.layout.customdialog_marker_info, null);
-        TextView txtMarkerDescription = sheetView.findViewById(R.id.txt_markerDescription);
-        txtMarkerDescription.setText(marker.getDescription());
-        dialog.setContentView(sheetView);
-        WindowManager.LayoutParams wlmp = dialog.getWindow().getAttributes();
-        wlmp.gravity = Gravity.BOTTOM;
-        dialog.show();
-    }
-
     protected void checkPermissions() {
         final List<String> missingPermissions = new ArrayList<>();
         // check all required dynamic permissions
@@ -523,14 +524,6 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
         return bestLocation;
     }
 
-    @Override
-    public void onItemClicked(Layer mainList, int position) {
-        List<String> schemes = map.getMapSchemes();
-        map.setMapScheme(schemes.get(mainList.getLayerID()));
-        dialog.dismiss();
-    }
-
-
     private void initCreateRouteButton() {
         btnRoute = findViewById(R.id.btn_route);
 
@@ -562,14 +555,6 @@ public class BasicMapActivity extends FragmentActivity implements LayersAdapter.
             }
         });
 
-    }
-
-    private void ShowInfo() {
-        fragment = new ContentFragment();
-        FragmentManager fm = getSupportFragmentManager();
-        FragmentTransaction t = fm.beginTransaction();
-        t.replace(R.id.fragment_container, fragment);
-        t.commit();
     }
 
     private void LoadRoute() {
