@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/txtdepartment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="DEPARTMANLAR" />
+
+    <TextView
+        android:id="@+id/txtselectall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="HEPSİNİ SEÇ" />
+
+    <Switch
+        android:id="@+id/test"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Test" />
+
+    <Switch
+        android:id="@+id/support"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Destek" />
+
+    <Switch
+        android:id="@+id/softwaredevelopment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Yazılım Geliştirme" />
+
+    <Switch
+        android:id="@+id/accounting"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Muhasebe" />
+
+    <Switch
+        android:id="@+id/arge"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Arge" />
+
+    <Switch
+        android:id="@+id/motorcare"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Motor Bakım" />
+
+</LinearLayout>

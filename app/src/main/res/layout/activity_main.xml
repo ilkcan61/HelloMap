@@ -1,4 +1,5 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical">
@@ -13,7 +14,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -22,147 +22,227 @@
             android:translationZ="90dp">
 
             <Button
+                android:id="@+id/btn_search"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_alignParentTop="true"
+                android:background="@mipmap/ic_search" />
+
+            <Button
+                android:id="@+id/btn_route"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_above="@+id/btn_mylocation"
+                android:layout_marginBottom="0dp"
+                android:background="@mipmap/ic_navigation" />
+
+            <Button
+                android:id="@+id/btn_mylocation"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_above="@+id/btn_zoomPositive"
+                android:layout_marginBottom="10dp"
+                android:background="@mipmap/ic_mylocation" />
+
+            <Button
                 android:id="@+id/btn_zoomPositive"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
                 android:layout_above="@+id/btn_zoomNegative"
                 android:background="@mipmap/ic_zoompositive" />
 
             <Button
                 android:id="@+id/btn_zoomNegative"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentBottom="true"
                 android:background="@mipmap/ic_zoomnegative" />
 
             <Button
-                android:id="@+id/btn_mylocation"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_above="@+id/btn_zoomPositive"
-                android:layout_marginBottom="32dp"
-                android:background="@mipmap/ic_mylocation" />
+                android:id="@+id/btn_rightpanel"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
+                android:background="@mipmap/ic_rightpanel" />
 
-            <Button
-                android:id="@+id/btn_route"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_above="@+id/btn_zoomPositive"
-                android:layout_marginBottom="99dp"
-                android:background="@mipmap/ic_navigation" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_alignParentEnd="true"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <Button
+                    android:id="@+id/btn_person"
+                    android:layout_width="@dimen/width_size_side_button"
+                    android:layout_height="@dimen/width_size_side_button"
+                    android:background="@mipmap/ic_personinactive" />
+
+                <Button
+                    android:id="@+id/btn_equipment"
+                    android:layout_width="@dimen/width_size_side_button"
+                    android:layout_height="@dimen/width_size_side_button"
+                    android:background="@mipmap/ic_equipmentinactive" />
+
+                <Button
+                    android:id="@+id/btn_signal"
+                    android:layout_width="@dimen/width_size_side_button"
+                    android:layout_height="@dimen/width_size_side_button"
+                    android:background="@mipmap/ic_signalinactive" />
+
+                <Button
+                    android:id="@+id/btn_reader"
+                    android:layout_width="@dimen/width_size_side_button"
+                    android:layout_height="@dimen/width_size_side_button"
+                    android:background="@mipmap/ic_readerinactive" />
+
+                <Button
+                    android:id="@+id/btn_cluster"
+                    android:layout_width="@dimen/width_size_side_button"
+                    android:layout_height="@dimen/width_size_side_button"
+                    android:background="@mipmap/ic_clusterinactive" />
+
+            </LinearLayout>
+
 
             <Button
                 android:id="@+id/btn_layer"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
                 android:layout_alignParentEnd="true"
                 android:layout_alignParentBottom="true"
                 android:background="@mipmap/ic_layer" />
 
+
+            <AutoCompleteTextView
+                android:id="@+id/txt_search"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:background="#E6FFFFFF"
+                android:drawableLeft="@drawable/ic_searchbar"
+                android:gravity="start"
+                android:hint="Search"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                android:padding="16dp"
+                android:textSize="16sp"
+                android:visibility="invisible"
+                tools:ignore="LabelFor" />
+
         </RelativeLayout>
 
-        <LinearLayout
+        <ScrollView
             android:id="@+id/fragment_container"
             android:layout_width="match_parent"
-            android:layout_height="160dp"
+            android:layout_height="140dp"
             android:layout_gravity="bottom"
-            android:alpha="0.95"
-            android:animateLayoutChanges="true"
             android:background="@drawable/shape_radius"
-            android:elevation="12dp"
-            android:gravity="start|center_vertical"
-            android:orientation="vertical"
-            android:padding="16dp"
             android:visibility="invisible">
 
             <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:id="@+id/ll_infoView"
+                android:layout_width="match_parent"
+                android:layout_height="160dp"
+                android:alpha="0.95"
+                android:animateLayoutChanges="true"
+                android:elevation="12dp"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:padding="10dp">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="ID: "
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/txtId"
-                    android:layout_width="match_parent"
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ID: "
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/txtId"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textSize="14sp" />
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="İsim: "
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/txtName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Kan Grubu: "
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/txt_bloodGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Doğum Tarihi: "
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/txt_dateOfBirth"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="İsim: "
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/txtName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textSize="14sp" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Kan Grubu: "
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/txt_bloodGroup"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textSize="14sp" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Doğum Tarihi: "
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/txt_dateOfBirth"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textSize="14sp" />
-
-            </LinearLayout>
-        </LinearLayout>
+        </ScrollView>
 
         <ScrollView
             android:id="@+id/ll_layer"
@@ -178,7 +258,6 @@
                 android:gravity="center"
                 android:orientation="vertical"
                 android:paddingTop="24dp">
-
 
                 <LinearLayout
                     android:id="@+id/ll_map_normal"
@@ -196,11 +275,6 @@
                         android:gravity="center"
                         android:text="Normal" />
 
-                    <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="center"
-                        android:src="@drawable/map_normal" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -250,9 +324,336 @@
                         android:scaleType="center"
                         android:src="@drawable/map_satellite" />
                 </LinearLayout>
+
             </LinearLayout>
 
         </ScrollView>
+
+        <ScrollView
+            android:id="@+id/ll_rightpanel"
+            android:layout_width="500dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="end"
+            android:background="#D9FFFFFF"
+            android:visibility="invisible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingTop="24dp">
+
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="10dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="FİLTRELER"
+                        android:textSize="30dp" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end"
+                        android:text="Toplam/Etiket" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="15dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:scaleType="center"
+                        android:src="@drawable/ic_panelregion" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="BÖLGE" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <Spinner
+                        android:id="@+id/spinnerregion"
+                        android:layout_width="410dp"
+                        android:layout_height="match_parent" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="15dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:scaleType="center"
+                        android:src="@drawable/ic_panelregion" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="DEPARTMAN" />
+
+                    <Button
+                        android:id="@+id/btn_department"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Seçin >" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="15dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:scaleType="center"
+                        android:src="@drawable/ic_panelregion" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ETİKET TİPİ" />
+
+                    <Button
+                        android:id="@+id/btn_tag"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Seçin >" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/llPopUpWindow"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="15dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:scaleType="center"
+                        android:src="@drawable/ic_panelregion" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ANA KATAGORİ" />
+
+                    <TextView
+                        android:id="@+id/SelectBox"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                    <Button
+                        android:id="@+id/create"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="#B1B1B1"
+                        android:text="SEÇ" />
+
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/llSubCategory"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="15dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:scaleType="center"
+                        android:src="@drawable/ic_panelregion" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ALT KATAGORİ" />
+
+                    <TextView
+                        android:id="@+id/SelectBox2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                    <Button
+                        android:id="@+id/subcategory"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="#B1B1B1"
+                        android:text="SEÇ" />
+
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="15dp"
+                    android:orientation="horizontal">
+
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:scaleType="center"
+                        android:src="@drawable/ic_panelregion" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="BAKIM TARİHİ" />
+
+                    <Button
+                        android:id="@+id/btn_maintenancedate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="#B1B1B1"
+                        android:text="SEÇ" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="15dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:scaleType="center"
+                        android:src="@drawable/ic_panelregion" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ETİKET" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <Spinner
+                        android:id="@+id/spinnerlabel"
+                        android:layout_width="410dp"
+                        android:layout_height="match_parent" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="15dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:scaleType="center"
+                        android:src="@drawable/ic_panelregion" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="GÖREVLİ OLDUĞU UÇAK" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:hint="---" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="15dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="ÖZET BİLGİ"
+                        android:textSize="30dp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="15dp"
+                    android:orientation="horizontal"
+                    android:gravity="end">
+
+                    <Button
+                        android:id="@+id/btn_mobile"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="#00FFFFFF"
+                        android:drawableLeft="@drawable/ic_panelregion"
+                        android:text="btn 1" />
+
+                    <Button
+                        android:id="@+id/btn_constant"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="#00FFFFFF"
+                        android:drawableLeft="@drawable/ic_panelregion"
+                        android:text="btn 2"/>
+
+                    <Button
+                        android:id="@+id/btn_sensor"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="#00FFFFFF"
+                        android:drawableLeft="@drawable/ic_panelregion"
+                        android:text="btn 3" />
+
+                </LinearLayout>
+
+
+
+
+            </LinearLayout>
+
+        </ScrollView>
+
 
     </FrameLayout>
     <!-- Map Fragment embedded with the map object -->

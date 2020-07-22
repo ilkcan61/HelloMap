@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ETİKET TİPLERİ" />
+
+    <Switch
+        android:id="@+id/gps"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="GPS" />
+
+    <Switch
+        android:id="@+id/rfid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="RFID" />
+
+    <Switch
+        android:id="@+id/slave"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Slave" />
+
+    <Switch
+        android:id="@+id/standart"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Standart" />
+
+    <Switch
+        android:id="@+id/followup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Yer Üstü Hız Takip" />
+</LinearLayout>

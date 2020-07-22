@@ -4,4 +4,5 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="layer_image_width">160dp</dimen>
     <dimen name="layer_image_height">180dp</dimen>
+    <dimen name="width_size_side_button">50dp</dimen>
 </resources>

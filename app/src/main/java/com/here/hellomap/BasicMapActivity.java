@@ -20,22 +20,28 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.View;
+import android.view.Window;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.PopupWindow;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -46,7 +52,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
 import com.here.android.mpa.common.CopyrightLogoPosition;
-import com.here.android.mpa.common.GeoBoundingBox;
 import com.here.android.mpa.common.GeoCoordinate;
 import com.here.android.mpa.common.Image;
 import com.here.android.mpa.common.OnEngineInitListener;
@@ -57,68 +62,124 @@ import com.here.android.mpa.mapping.MapGesture;
 import com.here.android.mpa.mapping.MapMarker;
 import com.here.android.mpa.mapping.MapObject;
 import com.here.android.mpa.mapping.MapRoute;
-import com.here.android.mpa.routing.CoreRouter;
-import com.here.android.mpa.routing.RouteOptions;
-import com.here.android.mpa.routing.RoutePlan;
-import com.here.android.mpa.routing.RouteResult;
-import com.here.android.mpa.routing.RouteWaypoint;
-import com.here.android.mpa.routing.Router;
-import com.here.android.mpa.routing.RoutingError;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Timer;
-import java.util.TimerTask;
 
-public class BasicMapActivity extends FragmentActivity implements View.OnClickListener {
+public class BasicMapActivity extends FragmentActivity implements View.OnClickListener, AdapterView.OnItemSelectedListener {
     private final static int REQUEST_CODE_ASK_PERMISSIONS = 1;
     private static final String[] REQUIRED_SDK_PERMISSIONS = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
+    public static boolean[] checkSelected;
+
     private Map map = null;
     private AndroidXMapFragment mapFragment = null;
     private LocationManager locationManager;
     private Dialog dialog;
-    MapRoute mapRoute;
+    private MapRoute mapRoute;
     private Fragment fragment = null;
-    private LinearLayout llInfo;
+    private AutoCompleteTextView txtSearch;
+
     private TextView txtInfoId;
     private TextView txtInfoName;
     private TextView txtInfoBloodGroup;
     private TextView txtInfodateOfBirth;
-    private MapMarker customMarker1;
-    private MapMarker customMarker2;
-    private boolean oriantationVertical = true;
+
     private Button btnZoomPositive;
     private Button btnZoomNegative;
     private Button btnMylocation;
     private Button btnLayers;
     private Button btnRoute;
+    private Button btnSearch;
+    private Button btnRightpanel;
+    private Button btnPerson;
+    private Button btnEquipment;
+    private Button btnSignal;
+    private Button btnReader;
+    private Button btnCluster;
+    private Button btnDepartments;
+    private Button btnTag;
+    private Button btnMaintenance;
+
+    private ScrollView llInfo;
     private ScrollView llLayout;
+    private ScrollView llRightpanel;
+
     private LinearLayout llMapNormal;
     private LinearLayout llMapTerrain;
     private LinearLayout llMapSatellite;
+    private LinearLayout llinfoView;
+
+    private ArrayList<MapMarker> markers;
+    private ArrayList<UserModal> user;
+    private PopupWindow pw;
+
+
+//    private List<Model> mModelList;
+//    private RecyclerView mRecyclerView;
+//    private RecyclerView.Adapter mAdapter;
+
+    boolean isPlay = false;
+    private boolean expanded;
+    private boolean oriantationVertical = true;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         llInfo = findViewById(R.id.fragment_container);
         llLayout = findViewById(R.id.ll_layer);
+        llRightpanel = findViewById(R.id.ll_rightpanel);
         llMapNormal = findViewById(R.id.ll_map_normal);
         llMapTerrain = findViewById(R.id.ll_terrain);
         llMapSatellite = findViewById(R.id.ll_map_satellite);
         llMapNormal.setOnClickListener(this);
         llMapTerrain.setOnClickListener(this);
         llMapSatellite.setOnClickListener(this);
+        llinfoView = findViewById(R.id.ll_infoView);
+        txtSearch = findViewById(R.id.txt_search);
+
+
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         checkPermissions();
-        initCreateRouteButton();
+
+
+        String[] country = {"Ankara", "İstanbul", "Trabzon", "İzmir", "Sakarya",};
+
+        Spinner spin = (Spinner) findViewById(R.id.spinnerregion);
+        spin.setOnItemSelectedListener(this);
+
+        ArrayAdapter a = new ArrayAdapter(this, android.R.layout.simple_spinner_item, country);
+        a.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        spin.setAdapter(a);
+
+
+
+
+        String[] label = {"test 1", "test 2", "test 3", "test 4",};
+
+        Spinner spin3 = (Spinner)findViewById(R.id.spinnerlabel);
+        spin3.setOnItemSelectedListener(this);
+
+        ArrayAdapter b = new ArrayAdapter(BasicMapActivity.this, android.R.layout.simple_spinner_item, label);
+        b.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        spin3.setAdapter(b);
+
+
+
+
+
+
         int orientation = getResources().getConfiguration().orientation;
 
         if (orientation == Configuration.ORIENTATION_PORTRAIT) {
             final float scale = getApplicationContext().getResources().getDisplayMetrics().density;
-            int pixels = (int) (120 * scale + 0.5f);
+            int pixels = (int) (180 * scale + 0.5f);
             FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, pixels);
             layoutParams.gravity = Gravity.BOTTOM;
             llInfo.setLayoutParams(layoutParams);
@@ -128,8 +189,23 @@ public class BasicMapActivity extends FragmentActivity implements View.OnClickLi
             FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(pixels, FrameLayout.LayoutParams.MATCH_PARENT);
             layoutParams.gravity = Gravity.END;
             llInfo.setLayoutParams(layoutParams);
+            FrameLayout.LayoutParams layoutParams2 = new FrameLayout.LayoutParams(pixels, FrameLayout.LayoutParams.MATCH_PARENT);
+            layoutParams2.gravity = Gravity.CENTER;
+            llinfoView.setLayoutParams(layoutParams2);
         }
+
+        user = new ArrayList<>();
+        user.add(new UserModal(10, "İlkcan Yılmaz", "A Rh+", "23/07/1996", 40.792921, 39.581863));
+        user.add(new UserModal(20, "Ugur Büyükyılmaz", "AB Rh+", "05/10/1996", 40.892921, 39.481863));
+        user.add(new UserModal(30, "Mehmet Koşar", "A Rh", "20/06/1994", 40.692921, 39.381863));
+        user.add(new UserModal(40, "Müdür Mehmet", "0 Rh+", "16/08/1996", 40.592921, 39.281863));
+        user.add(new UserModal(50, "Mustafa Arslan", "0 Rh-", "02/01/1985", 40.492921, 39.181863));
+        user.add(new UserModal(60, "Ahmet Temur", "AB Rh-", "25/06/1999", 40.392921, 39.681863));
+        user.add(new UserModal(70, "Ugur Ugur", "0 Rh+", "11/12/1975", 40.292921, 39.781863));
+
     }
+
+
 
     private AndroidXMapFragment getMapFragment() {
         return (AndroidXMapFragment) getSupportFragmentManager().findFragmentById(R.id.mapfragment);
@@ -138,8 +214,8 @@ public class BasicMapActivity extends FragmentActivity implements View.OnClickLi
     private void addMarkerMyLocation(Location lct) {
         final BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_location);
         Bitmap b = bitmapdraw.getBitmap();
-        int height = 140;
-        int width = 140;
+        int height = 100;
+        int width = 100;
         Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
         final Image image = new Image();
         image.setBitmap(smallMarker);
@@ -150,7 +226,6 @@ public class BasicMapActivity extends FragmentActivity implements View.OnClickLi
 
     @SuppressWarnings("deprecation")
     private void initialize(final Location lct) {
-        // Search for the map fragment to finish setup by calling init().
         mapFragment = getMapFragment();
 
         mapFragment.init(new OnEngineInitListener() {
@@ -158,41 +233,45 @@ public class BasicMapActivity extends FragmentActivity implements View.OnClickLi
             public void onEngineInitializationCompleted(
                     final OnEngineInitListener.Error error) {
                 if (error == OnEngineInitListener.Error.NONE) {
-                    // retrieve a reference of the map from the map fragment
-                    map = mapFragment.getMap();
-                    // Set the map center to the Vancouver region (no animation)
-                    map.setCenter(new GeoCoordinate(lct.getLatitude(), lct.getLongitude(), 0.0),
-                            Map.Animation.NONE);
 
+                    map = mapFragment.getMap();
+                    map.setCenter(new GeoCoordinate(lct.getLatitude(), lct.getLongitude(), 0.0), Map.Animation.NONE);
                     final BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_location);
+
                     addMarkerMyLocation(lct);
-                    // Set the zoom level to the average between min and max
+
                     map.setZoomLevel((map.getMaxZoomLevel() + map.getMinZoomLevel()) / 2);
+
                     btnZoomPositive = findViewById(R.id.btn_zoomPositive);
                     btnZoomNegative = findViewById(R.id.btn_zoomNegative);
+                    btnMylocation = findViewById(R.id.btn_mylocation);
+                    btnLayers = findViewById(R.id.btn_layer);
+                    btnSearch = findViewById(R.id.btn_search);
+                    btnRoute = findViewById(R.id.btn_route);
+                    btnRightpanel = findViewById(R.id.btn_rightpanel);
+                    btnDepartments = findViewById(R.id.btn_department);
+                    btnTag = findViewById(R.id.btn_tag);
+                    btnMaintenance = findViewById(R.id.btn_maintenancedate);
+
+                    btnPerson = findViewById(R.id.btn_person);
+                    btnPerson.setBackgroundResource(R.mipmap.ic_personinactive);
+
+                    btnEquipment = findViewById(R.id.btn_equipment);
+                    btnEquipment.setBackgroundResource(R.mipmap.ic_equipmentinactive);
+
+                    btnSignal = findViewById(R.id.btn_signal);
+                    btnSignal.setBackgroundResource(R.mipmap.ic_signalinactive);
+
+                    btnReader = findViewById(R.id.btn_reader);
+                    btnReader.setBackgroundResource(R.mipmap.ic_readerinactive);
+
+                    btnCluster = findViewById(R.id.btn_cluster);
+                    btnCluster.setBackgroundResource(R.mipmap.ic_clusterinactive);
+
+
                     mapFragment.setCopyrightLogoPosition(CopyrightLogoPosition.BOTTOM_LEFT);
 
-                 /*   CoreRouter router = new CoreRouter();
-                    RoutePlan routePlan = new RoutePlan();
-                    routePlan.addWaypoint(new RouteWaypoint(new GeoCoordinate(40.8747, 29.1294)));
-                    routePlan.addWaypoint(new RouteWaypoint(new GeoCoordinate(41.8747, 30.1294)));
-                    RouteOptions routeOptions = new RouteOptions();
-                    routeOptions.setTransportMode(RouteOptions.TransportMode.CAR);
-                    routeOptions.setRouteType(RouteOptions.Type.FASTEST);
-
-                    routePlan.setRouteOptions(routeOptions);
-*/
-                       /* map.addTransformListener(new Map.OnTransformListener() {
-                            @Override
-                            public void onMapTransformStart() {
-
-                            }
-
-                            @Override
-                            public void onMapTransformEnd(MapState mapState) {
-
-                            }
-                        });*/
+                    createUserMarker(user);
 
                     btnZoomPositive.setOnClickListener(new View.OnClickListener() {
                         @Override
@@ -206,7 +285,6 @@ public class BasicMapActivity extends FragmentActivity implements View.OnClickLi
                             map.setZoomLevel(map.getZoomLevel() / 1.06);
                         }
                     });
-                    btnMylocation = findViewById(R.id.btn_mylocation);
                     btnMylocation.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
@@ -216,8 +294,6 @@ public class BasicMapActivity extends FragmentActivity implements View.OnClickLi
                             map.setCenter(new GeoCoordinate(lct.getLatitude(), lct.getLongitude(), 0.0), Map.Animation.NONE);
                         }
                     });
-
-                    btnLayers = findViewById(R.id.btn_layer);
                     btnLayers.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
@@ -225,6 +301,116 @@ public class BasicMapActivity extends FragmentActivity implements View.OnClickLi
                             showDialog(schemes);
                         }
                     });
+                    btnRoute.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (map != null && mapRoute != null) {
+                                map.removeMapObject(mapRoute);
+                                mapRoute = null;
+                            } else {
+                                map.removeAllMapObjects();
+
+                                infoUser(user);
+
+                            }
+                        }
+                    });
+                    btnSearch.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+
+                            showSearchBar();
+
+                        }
+                    });
+                    btnRightpanel.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+
+                            showPanel();
+
+                        }
+                    });
+                    btnPerson.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (isPlay) {
+                                v.setBackgroundResource(R.mipmap.ic_personinactive);
+                            } else {
+                                v.setBackgroundResource(R.mipmap.ic_personactive);
+                            }
+                            isPlay = !isPlay;
+                        }
+                    });
+                    btnEquipment.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (isPlay) {
+                                v.setBackgroundResource(R.mipmap.ic_equipmentinactive);
+                            } else {
+                                v.setBackgroundResource(R.mipmap.ic_equipmentactive);
+                            }
+                            isPlay = !isPlay;
+                        }
+                    });
+                    btnSignal.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (isPlay) {
+                                v.setBackgroundResource(R.mipmap.ic_signalinactive);
+                            } else {
+                                v.setBackgroundResource(R.mipmap.ic_signalactive);
+                            }
+                            isPlay = !isPlay;
+                        }
+                    });
+                    btnReader.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (isPlay) {
+                                v.setBackgroundResource(R.mipmap.ic_readerinactive);
+                            } else {
+                                v.setBackgroundResource(R.mipmap.ic_readeractive);
+                            }
+                            isPlay = !isPlay;
+                        }
+                    });
+                    btnCluster.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (isPlay) {
+                                v.setBackgroundResource(R.mipmap.ic_clusterinactive);
+                            } else {
+                                v.setBackgroundResource(R.mipmap.ic_clusteractive);
+                            }
+                            isPlay = !isPlay;
+                        }
+                    });
+                    btnDepartments.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+
+                            showDepartmantsDialog();
+
+                        }
+                    });
+                    btnTag.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+
+                            showTagDialog();
+
+                        }
+                    });
+                    btnMaintenance.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+
+                            showMaintenanceDialog();
+
+                        }
+                    });
+
                     MapGesture.OnGestureListener onGestureListener = new MapGesture.OnGestureListener() {
 
                         @Override
@@ -249,7 +435,6 @@ public class BasicMapActivity extends FragmentActivity implements View.OnClickLi
 
                         @Override
                         public boolean onMapObjectsSelected(@NonNull List<ViewObject> list) {
-
                             for (ViewObject viewObject : list) {
                                 if (viewObject.getBaseType() == ViewObject.Type.USER_OBJECT) {
                                     final MapObject mapObject = (MapObject) viewObject;
@@ -258,12 +443,11 @@ public class BasicMapActivity extends FragmentActivity implements View.OnClickLi
                                             public void run() {
                                                 MapMarker window_marker = ((MapMarker) mapObject);
                                                 final Bitmap b = bitmapdraw.getBitmap();
-                                                Bitmap smallMarker = Bitmap.createScaledBitmap(b, 160, 160, false);
+                                                Bitmap smallMarker = Bitmap.createScaledBitmap(b, 100, 100, false);
                                                 final Image image = new Image();
                                                 image.setBitmap(smallMarker);
                                                 window_marker.setIcon(image);
                                                 Animation slideUp = AnimationUtils.loadAnimation(BasicMapActivity.this, R.anim.slide_up);
-
 
                                                 if (window_marker.getDescription().equals("Şu an ki konumunuz")) {
                                                     Toast.makeText(getApplicationContext(), "Şu an ki konumunuz", Toast.LENGTH_SHORT).show();
@@ -277,6 +461,7 @@ public class BasicMapActivity extends FragmentActivity implements View.OnClickLi
                                                     txtInfoName = findViewById(R.id.txtName);
                                                     txtInfoBloodGroup = findViewById(R.id.txt_bloodGroup);
                                                     txtInfodateOfBirth = findViewById(R.id.txt_dateOfBirth);
+
                                                     String[] markerDescriptions = window_marker.getDescription().split("%");
                                                     String id = markerDescriptions[0];
                                                     String name = markerDescriptions[1];
@@ -288,7 +473,6 @@ public class BasicMapActivity extends FragmentActivity implements View.OnClickLi
                                                     txtInfoBloodGroup.setText(bloodGroup);
                                                     txtInfodateOfBirth.setText(dateOfBirth);
                                                 }
-
                                             }
                                         });
                                         return true;
@@ -314,18 +498,29 @@ public class BasicMapActivity extends FragmentActivity implements View.OnClickLi
                                         llInfo.startAnimation(slideDown);
                                     }
                                     if (llLayout.getVisibility() == View.VISIBLE) {
-                                        btnLayers.setVisibility(View.VISIBLE);
+                                        ButtonVisibility(View.VISIBLE);
                                         llLayout.setVisibility(View.INVISIBLE);
                                         Animation slideRight = AnimationUtils.loadAnimation(BasicMapActivity.this, R.anim.slide_down);
                                         llLayout.setAnimation(slideRight);
                                     }
+                                    if (txtSearch.getVisibility() == View.VISIBLE) {
+                                        btnSearch.setVisibility(View.VISIBLE);
+                                        btnRightpanel.setVisibility(View.VISIBLE);
+                                        txtSearch.setVisibility(View.INVISIBLE);
+                                        Animation slideRight = AnimationUtils.loadAnimation(BasicMapActivity.this, R.anim.slide_down);
+                                        txtSearch.setAnimation(slideRight);
 
+                                        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                                        imm.hideSoftInputFromWindow(txtSearch.getWindowToken(), 0);
+                                    }
+                                    if (llRightpanel.getVisibility() == View.VISIBLE) {
+                                        ButtonVisibility(View.VISIBLE);
+                                        llRightpanel.setVisibility(View.INVISIBLE);
+                                        Animation slideRight = AnimationUtils.loadAnimation(BasicMapActivity.this, R.anim.slide_down);
+                                        llRightpanel.setAnimation(slideRight);
+                                    }
                                 }
                             });
-                            if (customMarker1 != null) {
-                                customMarker1.setIcon(image);
-                                customMarker2.setIcon(image);
-                            }
                             return false;
                         }
 
@@ -398,6 +593,168 @@ public class BasicMapActivity extends FragmentActivity implements View.OnClickLi
                 }
             }
         });
+
+        final ArrayList<String> items = new ArrayList<String>();
+        items.add("Item 1");
+        items.add("Item 2");
+        items.add("Item 3");
+        items.add("Item 4");
+        items.add("Item 5");
+
+        checkSelected = new boolean[items.size()];
+        //initialize all values of list to 'unselected' initially
+        for (int i = 0; i < checkSelected.length; i++) {
+            checkSelected[i] = false;
+        }
+
+        final TextView tv = (TextView) findViewById(R.id.SelectBox);
+        tv.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+
+                if (!expanded) {
+                    //display all selected values
+                    String selected = "";
+                    int flag = 0;
+                    for (int i = 0; i < items.size(); i++) {
+                        if (checkSelected[i] == true) {
+                            selected += items.get(i);
+                            selected += ", ";
+                            flag = 1;
+                        }
+                    }
+                    if (flag == 1)
+                        tv.setText(selected);
+                    expanded = true;
+                } else {
+                    //display shortened representation of selected values
+                    tv.setText(MainListAdapter.getSelected());
+                    expanded = false;
+                }
+            }
+        });
+
+        Button createButton = (Button) findViewById(R.id.create);
+        createButton.setOnClickListener(new View.OnClickListener() {
+
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+
+                showMainCategoryDialog(items, tv);
+            }
+        });
+
+        final ArrayList<String> subitems = new ArrayList<String>();
+        subitems.add("Item 1");
+        subitems.add("Item 2");
+        subitems.add("Item 3");
+        subitems.add("Item 4");
+        subitems.add("Item 5");
+        subitems.add("Item 6");
+        subitems.add("Item 7");
+
+        checkSelected = new boolean[subitems.size()];
+        //initialize all values of list to 'unselected' initially
+        for (int i = 0; i < checkSelected.length; i++) {
+            checkSelected[i] = false;
+        }
+
+        final TextView tvv = findViewById(R.id.SelectBox2);
+        tvv.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+
+                if (!expanded) {
+                    //display all selected values
+                    String selected = "";
+                    int flag = 0;
+                    for (int i = 0; i < subitems.size(); i++) {
+                        if (checkSelected[i] == true) {
+                            selected += subitems.get(i);
+                            selected += ", ";
+                            flag = 1;
+                        }
+                    }
+                    if (flag == 1)
+                        tvv.setText(selected);
+                    expanded = true;
+                } else {
+                    //display shortened representation of selected values
+                    tvv.setText(SubListAdapter.getSelected());
+                    expanded = false;
+                }
+            }
+        });
+
+        Button subcategoryButton = findViewById(R.id.subcategory);
+        subcategoryButton.setOnClickListener(new View.OnClickListener() {
+
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                showSubCategoryDialog(subitems, tvv);
+            }
+        });
+
+    }
+
+    public void createUserMarker(final ArrayList<UserModal> user) {
+
+        BitmapDrawable bitmapdraw2 = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_location);
+        final Bitmap b = bitmapdraw2.getBitmap();
+        Bitmap smallMarker = Bitmap.createScaledBitmap(b, 100, 100, false);
+        final Image image = new Image();
+        image.setBitmap(smallMarker);
+
+        markers = new ArrayList<>();
+
+        for (int i = 0; i < user.size(); i++) {
+            markers.add(new MapMarker(new GeoCoordinate(user.get(i).getLatitude(), user.get(i).getLongitude(), 0.0), image));
+            markers.get(i).setDescription(user.get(i).getId() + "%" + user.get(i).getName() + "%" + user.get(i).getBloodGroup() + "%" + user.get(i).getDateOfBirth() + "%" + user.get(i).getLatitude() + "%" + user.get(i).getLongitude());
+            map.addMapObject(markers.get(i));
+        }
+
+        AutoCompleteAdapter adapter = new AutoCompleteAdapter(BasicMapActivity.this, R.layout.item_autocompletetextview, user);
+
+        txtSearch.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                for (int i = 0; user.size() > i; i++) {
+                    if (user.get(i).getId() == id) {
+                        map.setCenter(new GeoCoordinate(user.get(i).getLatitude(), user.get(i).getLongitude(), 0.0), Map.Animation.NONE);
+                        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(txtSearch.getWindowToken(), 0);
+                    }
+                }
+            }
+        });
+        txtSearch.setAdapter(adapter);
+    }
+
+    private void infoUser(final ArrayList<UserModal> user) {
+
+        createUserMarker(user);
+
+        map.setZoomLevel((map.getMaxZoomLevel() + map.getMinZoomLevel()) / 2.0);
+        map.setCenter(new GeoCoordinate(user.get(0).getLatitude(), user.get(0).getLongitude(), 0.0), Map.Animation.NONE);
+
+        ArrayList<String> userName = new ArrayList<>();
+
+        for (int i = 0; i < user.size(); i++) {
+            userName.add(user.get(i).getName());
+        }
+    }
+
+    public void showSearchBar() {
+        txtSearch.setVisibility(View.VISIBLE);
+        btnSearch.setVisibility(View.INVISIBLE);
+        btnRightpanel.setVisibility((View.INVISIBLE));
+
+        Animation slideRight = AnimationUtils.loadAnimation(BasicMapActivity.this, R.anim.slide_right);
+        txtSearch.setAnimation(slideRight);
     }
 
     @Override
@@ -406,9 +763,85 @@ public class BasicMapActivity extends FragmentActivity implements View.OnClickLi
         return true;
     }
 
+    public void showMaintenanceDialog() {
+
+        dialog = new Dialog(BasicMapActivity.this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCancelable(true);
+        dialog.setContentView(R.layout.custom_dialog_maintenancedate);
+
+        String[] maintenance = {"Ankara", "İstanbul", "Trabzon", "İzmir",};
+
+        Spinner spin2 = (Spinner)dialog.findViewById(R.id.spinnermaintenance);
+        spin2.setOnItemSelectedListener(this);
+
+        ArrayAdapter aa = new ArrayAdapter(BasicMapActivity.this, android.R.layout.simple_spinner_item, maintenance);
+        aa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        spin2.setAdapter(aa);
+
+
+        dialog.show();
+
+    }
+
+    public void showDepartmantsDialog() {
+
+        dialog = new Dialog(BasicMapActivity.this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCancelable(true);
+        dialog.setContentView(R.layout.custom_dialog_departmants);
+        dialog.show();
+
+    }
+
+    public void showTagDialog() {
+
+        dialog = new Dialog(BasicMapActivity.this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCancelable(true);
+        dialog.setContentView(R.layout.custom_dialog_tag);
+        dialog.show();
+
+    }
+
+    public void showMainCategoryDialog(ArrayList<String> items, TextView tv) {
+
+        dialog = new Dialog(BasicMapActivity.this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCancelable(true);
+        dialog.setContentView(R.layout.pop_up_window);
+        dialog.show();
+
+        final ListView list = dialog.findViewById(R.id.dropDownList);
+        MainListAdapter adapter = new MainListAdapter(this, items, tv);
+        list.setAdapter(adapter);
+
+    }
+
+    public void showSubCategoryDialog(ArrayList<String> subitems, TextView tvv) {
+
+        dialog = new Dialog(BasicMapActivity.this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCancelable(true);
+        dialog.setContentView(R.layout.sub_category);
+        dialog.show();
+
+        final ListView list = dialog.findViewById(R.id.subCategoryList);
+        SubListAdapter adapter = new SubListAdapter(this, subitems, tvv);
+        list.setAdapter(adapter);
+
+    }
+
     public void showDialog(List<String> layerList) {
         llLayout.setVisibility(View.VISIBLE);
         btnLayers.setVisibility(View.INVISIBLE);
+        btnRightpanel.setVisibility(View.INVISIBLE);
+        btnPerson.setVisibility(View.INVISIBLE);
+        btnEquipment.setVisibility(View.INVISIBLE);
+        btnSignal.setVisibility(View.INVISIBLE);
+        btnReader.setVisibility(View.INVISIBLE);
+        btnCluster.setVisibility(View.INVISIBLE);
         Animation slideRight = AnimationUtils.loadAnimation(BasicMapActivity.this, R.anim.slide_right);
         llLayout.setAnimation(slideRight);
        /* dialog = new Dialog(BasicMapActivity.this);
@@ -434,66 +867,107 @@ public class BasicMapActivity extends FragmentActivity implements View.OnClickLi
         dialog.show();*/
     }
 
-    protected void checkPermissions() {
-        final List<String> missingPermissions = new ArrayList<>();
-        // check all required dynamic permissions
-        for (final String permission : REQUIRED_SDK_PERMISSIONS) {
-            final int result = ContextCompat.checkSelfPermission(this, permission);
-            if (result != PackageManager.PERMISSION_GRANTED) {
-                missingPermissions.add(permission);
-            }
-        }
-        if (!missingPermissions.isEmpty()) {
-            // request all missing permissions
-            final String[] permissions = missingPermissions
-                    .toArray(new String[missingPermissions.size()]);
-            ActivityCompat.requestPermissions(this, permissions, REQUEST_CODE_ASK_PERMISSIONS);
-        } else {
-            final int[] grantResults = new int[REQUIRED_SDK_PERMISSIONS.length];
-            Arrays.fill(grantResults, PackageManager.PERMISSION_GRANTED);
-            onRequestPermissionsResult(REQUEST_CODE_ASK_PERMISSIONS, REQUIRED_SDK_PERMISSIONS,
-                    grantResults);
-        }
-    }
+    public void showPanel() {
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[],
-                                           @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_CODE_ASK_PERMISSIONS:
-                for (int index = permissions.length - 1; index >= 0; --index) {
-                    if (grantResults[index] != PackageManager.PERMISSION_GRANTED) {
-                        // exit the app if one permission is not granted
-                        Toast.makeText(this, "Required permission '" + permissions[index]
-                                + "' not granted, exiting", Toast.LENGTH_LONG).show();
-                        finish();
-                        return;
-                    }
-                }
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
-                }
-                Location lct = getLastKnownLocation();
-                // all permissions were granted
-                initialize(lct);
-                break;
-        }
-    }
+        llRightpanel.setVisibility(View.VISIBLE);
+        btnLayers.setVisibility(View.INVISIBLE);
+        btnPerson.setVisibility(View.INVISIBLE);
+        btnEquipment.setVisibility(View.INVISIBLE);
+        btnSignal.setVisibility(View.INVISIBLE);
+        btnReader.setVisibility(View.INVISIBLE);
+        btnCluster.setVisibility(View.INVISIBLE);
+        btnRightpanel.setVisibility(View.INVISIBLE);
+        Animation slideRight = AnimationUtils.loadAnimation(BasicMapActivity.this, R.anim.slide_right);
+        llRightpanel.setAnimation(slideRight);
 
+    }
 
     @Override
     protected void onResume() {
         super.onResume();
         Location lct = getLastKnownLocation();
-        // all permissions were granted
         initialize(lct);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        int newOrientation = newConfig.orientation;
+
+        oriantationVertical = newOrientation != Configuration.ORIENTATION_LANDSCAPE;
+
+        if (oriantationVertical) {
+            final float scale = getApplicationContext().getResources().getDisplayMetrics().density;
+            int pixels = (int) (180 * scale + 0.5f);
+            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, pixels);
+            layoutParams.gravity = Gravity.BOTTOM;
+            llInfo.setLayoutParams(layoutParams);
+            llinfoView.setLayoutParams(layoutParams);
+        } else {
+            final float scale = getApplicationContext().getResources().getDisplayMetrics().density;
+            int pixels = (int) (240 * scale + 0.5f);
+            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(pixels, FrameLayout.LayoutParams.MATCH_PARENT);
+            layoutParams.gravity = Gravity.END;
+            llInfo.setLayoutParams(layoutParams);
+            FrameLayout.LayoutParams layoutParams2 = new FrameLayout.LayoutParams(pixels, FrameLayout.LayoutParams.MATCH_PARENT);
+            layoutParams2.gravity = Gravity.CENTER;
+            llinfoView.setLayoutParams(layoutParams2);
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.ll_map_normal:
+                map.setMapScheme(Map.Scheme.NORMAL_DAY);
+                llLayout.setVisibility(View.INVISIBLE);
+                btnLayers.setVisibility(View.VISIBLE);
+                btnRightpanel.setVisibility((View.VISIBLE));
+                btnPerson.setVisibility((View.VISIBLE));
+                btnEquipment.setVisibility((View.VISIBLE));
+                btnSignal.setVisibility((View.VISIBLE));
+                btnReader.setVisibility((View.VISIBLE));
+                btnCluster.setVisibility((View.VISIBLE));
+                break;
+            case R.id.ll_terrain:
+                map.setMapScheme(Map.Scheme.TERRAIN_DAY);
+                llLayout.setVisibility(View.INVISIBLE);
+                btnLayers.setVisibility(View.VISIBLE);
+                btnRightpanel.setVisibility((View.VISIBLE));
+                btnPerson.setVisibility((View.VISIBLE));
+                btnEquipment.setVisibility((View.VISIBLE));
+                btnSignal.setVisibility((View.VISIBLE));
+                btnReader.setVisibility((View.VISIBLE));
+                btnCluster.setVisibility((View.VISIBLE));
+                break;
+            case R.id.ll_map_satellite:
+                map.setMapScheme(Map.Scheme.SATELLITE_DAY);
+                llLayout.setVisibility(View.INVISIBLE);
+                btnLayers.setVisibility(View.VISIBLE);
+                btnRightpanel.setVisibility((View.VISIBLE));
+                btnPerson.setVisibility((View.VISIBLE));
+                btnEquipment.setVisibility((View.VISIBLE));
+                btnSignal.setVisibility((View.VISIBLE));
+                btnReader.setVisibility((View.VISIBLE));
+                btnCluster.setVisibility((View.VISIBLE));
+                break;
+        }
+    }
+
+    private void ButtonVisibility(int visibility) {
+        btnLayers.setVisibility(visibility);
+        btnMylocation.setVisibility(visibility);
+        btnRoute.setVisibility(visibility);
+        btnZoomPositive.setVisibility(visibility);
+        btnZoomNegative.setVisibility(visibility);
+        btnSearch.setVisibility(visibility);
+        btnRightpanel.setVisibility(visibility);
+        btnPerson.setVisibility(visibility);
+        btnEquipment.setVisibility(visibility);
+        btnSignal.setVisibility(visibility);
+        btnReader.setVisibility(visibility);
+        btnCluster.setVisibility(visibility);
     }
 
     private Location getLastKnownLocation() {
@@ -524,280 +998,67 @@ public class BasicMapActivity extends FragmentActivity implements View.OnClickLi
         return bestLocation;
     }
 
-    private void initCreateRouteButton() {
-        btnRoute = findViewById(R.id.btn_route);
-
-        btnRoute.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                /*
-                 * Clear map if previous results are still on map,otherwise proceed to creating
-                 * route
-                 */
-                if (map != null && mapRoute != null) {
-                    map.removeMapObject(mapRoute);
-                    mapRoute = null;
-                } else {
-                    /*
-                     * The route calculation requires local map data.Unless there is pre-downloaded
-                     * map data on device by utilizing MapLoader APIs, it's not recommended to
-                     * trigger the route calculation immediately after the MapEngine is
-                     * initialized.The INSUFFICIENT_MAP_DATA error code may be returned by
-                     * CoreRouter in this case.
-                     *
-                     */
-                    //createRoute();
-                    map.removeAllMapObjects();
-
-                    LoadRoute();
-                    LoadRoute2();
-                }
-            }
-        });
-
-    }
-
-    private void LoadRoute() {
-        final ArrayList<Coordinate> coordinates = new ArrayList<>();
-        coordinates.add(new Coordinate(40.792921, 39.581863));
-        coordinates.add(new Coordinate(40.792596, 39.581777));
-        coordinates.add(new Coordinate(40.792613, 39.581670));
-        coordinates.add(new Coordinate(40.792353, 39.581584));
-        coordinates.add(new Coordinate(40.792174, 39.581476));
-        coordinates.add(new Coordinate(40.791930, 39.581283));
-
-        BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_location);
-        final Bitmap b = bitmapdraw.getBitmap();
-        Bitmap smallMarker = Bitmap.createScaledBitmap(b, 100, 100, false);
-        final Image image = new Image();
-        image.setBitmap(smallMarker);
-
-        final Handler handler = new Handler();
-        map.setCenter(new GeoCoordinate(coordinates.get(0).getLatitude(), coordinates.get(0).getLongitude(), 0.0),
-                Map.Animation.NONE);
-        customMarker1 = new MapMarker(new GeoCoordinate(coordinates.get(0).getLatitude(), coordinates.get(0).getLongitude(), 0.0), image);
-        customMarker1.setDescription("345761%İlkcan Yılmaz%A Rh+%23/07/1996");
-
-        map.addMapObject(customMarker1);
-        TimerTask doAsynchronousTask = new TimerTask() {
-            int i = 0;
-
-            @Override
-            public void run() {
-                handler.post(new Runnable() {
-                    public void run() {
-                        if (i < coordinates.size()) {
-                            customMarker1.setCoordinate(new GeoCoordinate(coordinates.get(i).getLatitude(), coordinates.get(i).getLongitude(), 0.0));
-                            i++;
-                        }
-                    }
-                });
-            }
-        };
-        Timer timer = new Timer();
-        timer.schedule(doAsynchronousTask, 10, 500);
-
-    }
-
-    private void LoadRoute2() {
-        final ArrayList<Coordinate> coordinates = new ArrayList<>();
-        coordinates.add(new Coordinate(40.772921, 39.571863));
-        coordinates.add(new Coordinate(40.772596, 39.571777));
-        coordinates.add(new Coordinate(40.772613, 39.571670));
-        coordinates.add(new Coordinate(40.772353, 39.571584));
-        coordinates.add(new Coordinate(40.772174, 39.571476));
-        coordinates.add(new Coordinate(40.771930, 39.571283));
-
-        final BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_location);
-        final Bitmap b = bitmapdraw.getBitmap();
-        Bitmap smallMarker = Bitmap.createScaledBitmap(b, 100, 100, false);
-        final Image image = new Image();
-        image.setBitmap(smallMarker);
-
-        final Handler handler = new Handler();
-        map.setCenter(new GeoCoordinate(coordinates.get(0).getLatitude(), coordinates.get(0).getLongitude(), 0.0),
-                Map.Animation.NONE);
-        customMarker2 = new MapMarker(new GeoCoordinate(coordinates.get(0).getLatitude(), coordinates.get(0).getLongitude(), 0.0), image);
-        customMarker2.setDescription("345761%Uğur Büyükyılmaz%AB Rh+%23/07/1996");
-
-        map.addMapObject(customMarker2);
-        TimerTask doAsynchronousTask = new TimerTask() {
-            int i = 0;
-
-            @Override
-            public void run() {
-                handler.post(new Runnable() {
-                    public void run() {
-                        if (i < coordinates.size()) {
-                            customMarker2.setCoordinate(new GeoCoordinate(coordinates.get(i).getLatitude(), coordinates.get(i).getLongitude(), 0.0));
-                            i++;
-                        }
-                    }
-                });
-            }
-        };
-        Timer timer = new Timer();
-        timer.schedule(doAsynchronousTask, 10, 500);
-
-
-    }
-
-    private void ButtonVisibility(int visibility) {
-        btnLayers.setVisibility(visibility);
-        btnMylocation.setVisibility(visibility);
-        btnRoute.setVisibility(visibility);
-        btnZoomPositive.setVisibility(visibility);
-        btnZoomNegative.setVisibility(visibility);
-    }
-
-    public Bitmap invert(Bitmap src) {
-        // image size
-        int width = src.getWidth();
-        int height = src.getHeight();
-        // create output bitmap
-        Bitmap bmOut = Bitmap.createBitmap(width, height, src.getConfig());
-        // color information
-        int A, R, G, B;
-        int pixel;
-
-        // scan through all pixels
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                // get pixel color
-                pixel = src.getPixel(x, y);
-                // get color on each channel
-                A = Color.alpha(pixel);
-                R = Color.red(pixel);
-                G = Color.green(pixel);
-                B = Color.blue(pixel);
-                // set new pixel color to output image
-                bmOut.setPixel(x, y, Color.argb(A, 100, 100, 100));
+    protected void checkPermissions() {
+        final List<String> missingPermissions = new ArrayList<>();
+        // check all required dynamic permissions
+        for (final String permission : REQUIRED_SDK_PERMISSIONS) {
+            final int result = ContextCompat.checkSelfPermission(this, permission);
+            if (result != PackageManager.PERMISSION_GRANTED) {
+                missingPermissions.add(permission);
             }
         }
-
-        // return final image
-        return bmOut;
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-
-        int newOrientation = newConfig.orientation;
-
-        oriantationVertical = newOrientation != Configuration.ORIENTATION_LANDSCAPE;
-        if (oriantationVertical) {
-            final float scale = getApplicationContext().getResources().getDisplayMetrics().density;
-            int pixels = (int) (120 * scale + 0.5f);
-            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, pixels);
-            layoutParams.gravity = Gravity.BOTTOM;
-            llInfo.setLayoutParams(layoutParams);
+        if (!missingPermissions.isEmpty()) {
+            // request all missing permissions
+            final String[] permissions = missingPermissions
+                    .toArray(new String[missingPermissions.size()]);
+            ActivityCompat.requestPermissions(this, permissions, REQUEST_CODE_ASK_PERMISSIONS);
         } else {
-            final float scale = getApplicationContext().getResources().getDisplayMetrics().density;
-            int pixels = (int) (240 * scale + 0.5f);
-            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(pixels, FrameLayout.LayoutParams.MATCH_PARENT);
-            layoutParams.gravity = Gravity.END;
-            llInfo.setLayoutParams(layoutParams);
+            final int[] grantResults = new int[REQUIRED_SDK_PERMISSIONS.length];
+            Arrays.fill(grantResults, PackageManager.PERMISSION_GRANTED);
+            onRequestPermissionsResult(REQUEST_CODE_ASK_PERMISSIONS, REQUIRED_SDK_PERMISSIONS,
+                    grantResults);
         }
-    }
-
-    private void createRoute() {
-        /* Initialize a CoreRouter */
-        CoreRouter coreRouter = new CoreRouter();
-
-        /* Initialize a RoutePlan */
-        RoutePlan routePlan = new RoutePlan();
-
-        /*
-         * Initialize a RouteOption. HERE Mobile SDK allow users to define their own parameters for the
-         * route calculation,including transport modes,route types and route restrictions etc.Please
-         * refer to API doc for full list of APIs
-         */
-        RouteOptions routeOptions = new RouteOptions();
-        /* Other transport modes are also available e.g Pedestrian */
-        routeOptions.setTransportMode(RouteOptions.TransportMode.CAR);
-        /* Disable highway in this route. */
-        routeOptions.setHighwaysAllowed(false);
-        /* Calculate the shortest route available. */
-        routeOptions.setRouteType(RouteOptions.Type.SHORTEST);
-        /* Calculate 1 route. */
-        routeOptions.setRouteCount(1);
-        /* Finally set the route option */
-        routePlan.setRouteOptions(routeOptions);
-
-        /* Define waypoints for the route */
-        /* START: 4350 Still Creek Dr */
-        RouteWaypoint startPoint = new RouteWaypoint(new GeoCoordinate(41.102697, 41.002697));
-        /* END: Langley BC */
-        RouteWaypoint destination = new RouteWaypoint(new GeoCoordinate(41.002697, 41.002697));
-
-        /* Add both waypoints to the route plan */
-        routePlan.addWaypoint(startPoint);
-        routePlan.addWaypoint(destination);
-
-        /* Trigger the route calculation,results will be called back via the listener */
-        coreRouter.calculateRoute(routePlan,
-                new Router.Listener<List<RouteResult>, RoutingError>() {
-                    @Override
-                    public void onProgress(int i) {
-                        /* The calculation progress can be retrieved in this callback. */
-                    }
-
-                    @Override
-                    public void onCalculateRouteFinished(List<RouteResult> routeResults,
-                                                         RoutingError routingError) {
-                        /* Calculation is done. Let's handle the result */
-                        if (routingError == RoutingError.NONE) {
-                            if (routeResults.get(0).getRoute() != null) {
-                                /* Create a MapRoute so that it can be placed on the map */
-                                mapRoute = new MapRoute(routeResults.get(0).getRoute());
-
-                                /* Show the maneuver number on top of the route */
-                                mapRoute.setManeuverNumberVisible(true);
-
-                                /* Add the MapRoute to the map */
-                                map.addMapObject(mapRoute);
-
-                                /*
-                                 * We may also want to make sure the map view is orientated properly
-                                 * so the entire route can be easily seen.
-                                 */
-                                GeoBoundingBox gbb = routeResults.get(0).getRoute()
-                                        .getBoundingBox();
-                                map.zoomTo(gbb, Map.Animation.NONE,
-                                        Map.MOVE_PRESERVE_ORIENTATION);
-                            } else {
-                                Toast.makeText(getApplicationContext(),
-                                        "Error:route results returned is not valid",
-                                        Toast.LENGTH_LONG).show();
-                            }
-                        } else {
-                            Toast.makeText(getApplicationContext(),
-                                    "Error:route calculation returned error code: " + routingError,
-                                    Toast.LENGTH_LONG).show();
-                        }
-                    }
-                });
     }
 
     @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.ll_map_normal:
-                map.setMapScheme(Map.Scheme.NORMAL_DAY);
-                llLayout.setVisibility(View.INVISIBLE);
-                btnLayers.setVisibility(View.VISIBLE);
-                break;
-            case R.id.ll_terrain:
-                map.setMapScheme(Map.Scheme.TERRAIN_DAY);
-                llLayout.setVisibility(View.INVISIBLE);
-                btnLayers.setVisibility(View.VISIBLE);
-                break;
-            case R.id.ll_map_satellite:
-                map.setMapScheme(Map.Scheme.SATELLITE_DAY);
-                llLayout.setVisibility(View.INVISIBLE);
-                btnLayers.setVisibility(View.VISIBLE);
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_CODE_ASK_PERMISSIONS:
+                for (int index = permissions.length - 1; index >= 0; --index) {
+                    if (grantResults[index] != PackageManager.PERMISSION_GRANTED) {
+                        // exit the app if one permission is not granted
+                        Toast.makeText(this, "Required permission '" + permissions[index]
+                                + "' not granted, exiting", Toast.LENGTH_LONG).show();
+                        finish();
+                        return;
+                    }
+                }
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
+                }
+                Location lct = getLastKnownLocation();
+                // all permissions were granted
+                initialize(lct);
                 break;
         }
+    }
+
+
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
     }
 }
